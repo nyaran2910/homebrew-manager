@@ -1,0 +1,115 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "homebrew-manager",
+  "title": "Homebrew",
+  "description": "Install, uninstall (with --zap), and upgrade Homebrew packages, auto-trusting taps when Homebrew asks for it.",
+  "icon": "extension-icon.png",
+  "author": "nyaran2910",
+  "categories": ["Developer Tools", "System"],
+  "license": "MIT",
+  "platforms": ["macOS"],
+  "commands": [
+    {
+      "name": "install",
+      "title": "Brew Install",
+      "description": "Search formulae/casks and install them (auto-trusts required taps)",
+      "mode": "view",
+      "arguments": [
+        { "name": "packages", "type": "text", "placeholder": "name or --cask name", "required": false }
+      ]
+    },
+    {
+      "name": "uninstall",
+      "title": "Brew Uninstall",
+      "description": "Uninstall installed formulae or casks",
+      "mode": "view",
+      "arguments": [
+        { "name": "packages", "type": "text", "placeholder": "name (empty = pick)", "required": false }
+      ]
+    },
+    {
+      "name": "uninstall-zap",
+      "title": "Brew Uninstall (Zap)",
+      "description": "Uninstall casks with --zap, removing their app data too",
+      "mode": "view",
+      "arguments": [
+        { "name": "packages", "type": "text", "placeholder": "cask name (empty = pick)", "required": false }
+      ]
+    },
+    {
+      "name": "upgrade",
+      "title": "Brew Upgrade",
+      "description": "Upgrade outdated packages, one at a time or all at once",
+      "mode": "view",
+      "arguments": [
+        { "name": "packages", "type": "text", "placeholder": "name (empty = pick)", "required": false }
+      ]
+    },
+    {
+      "name": "trust-taps",
+      "title": "Brew Trust Taps",
+      "description": "Show tapped repositories and trust or untrust them",
+      "mode": "view"
+    },
+    {
+      "name": "copy-last-error",
+      "title": "Copy Last Brew Error",
+      "description": "Copy the error message of the last failed brew command",
+      "mode": "no-view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "autoTrust",
+      "title": "Tap Trust",
+      "label": "Automatically trust taps when Homebrew asks for it",
+      "description": "When brew says a tap must be trusted, run `brew trust` and retry automatically.",
+      "type": "checkbox",
+      "required": false,
+      "default": true
+    },
+    {
+      "name": "trustScope",
+      "title": "Auto-Trust Scope",
+      "description": "Trust the whole tap, or only the specific formula/cask being loaded.",
+      "type": "dropdown",
+      "required": false,
+      "default": "tap",
+      "data": [
+        { "title": "Whole Tap (brew trust user/repo)", "value": "tap" },
+        { "title": "Only the Package (brew trust --formula/--cask ...)", "value": "item" }
+      ]
+    },
+    {
+      "name": "copyErrorOnFailure",
+      "title": "Errors",
+      "label": "Copy the error to the clipboard automatically on failure",
+      "description": "Otherwise use the Copy Last Brew Error command or the toast action.",
+      "type": "checkbox",
+      "required": false,
+      "default": false
+    },
+    {
+      "name": "brewPath",
+      "title": "brew Path",
+      "description": "Leave empty to auto-detect (/opt/homebrew/bin/brew or /usr/local/bin/brew).",
+      "type": "textfield",
+      "required": false
+    }
+  ],
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@raycast/api": "^2.13.1",
+    "@raycast/utils": "^2.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "19.3.0",
+    "typescript": "^5.7.2"
+  }
+}
