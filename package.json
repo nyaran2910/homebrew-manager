@@ -2,12 +2,17 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "homebrew-manager",
   "title": "Homebrew",
-  "description": "Install, uninstall (with --zap), and upgrade Homebrew packages, auto-trusting taps when Homebrew asks for it.",
+  "description": "Install, zap-uninstall, and upgrade Homebrew packages, auto-trusting taps when Homebrew asks for it.",
   "icon": "extension-icon.png",
   "author": "nyaran2910",
-  "categories": ["Developer Tools", "System"],
+  "categories": [
+    "Developer Tools",
+    "System"
+  ],
   "license": "MIT",
-  "platforms": ["macOS"],
+  "platforms": [
+    "macOS"
+  ],
   "commands": [
     {
       "name": "install",
@@ -15,16 +20,12 @@
       "description": "Search formulae/casks and install them (auto-trusts required taps)",
       "mode": "view",
       "arguments": [
-        { "name": "packages", "type": "text", "placeholder": "name or --cask name", "required": false }
-      ]
-    },
-    {
-      "name": "uninstall",
-      "title": "Brew Uninstall",
-      "description": "Uninstall installed formulae or casks",
-      "mode": "view",
-      "arguments": [
-        { "name": "packages", "type": "text", "placeholder": "name (empty = pick)", "required": false }
+        {
+          "name": "packages",
+          "type": "text",
+          "placeholder": "name or --cask name",
+          "required": false
+        }
       ]
     },
     {
@@ -33,7 +34,12 @@
       "description": "Uninstall casks with --zap, removing their app data too",
       "mode": "view",
       "arguments": [
-        { "name": "packages", "type": "text", "placeholder": "cask name (empty = pick)", "required": false }
+        {
+          "name": "packages",
+          "type": "text",
+          "placeholder": "cask name (empty = pick)",
+          "required": false
+        }
       ]
     },
     {
@@ -42,7 +48,12 @@
       "description": "Upgrade outdated packages, one at a time or all at once",
       "mode": "view",
       "arguments": [
-        { "name": "packages", "type": "text", "placeholder": "name (empty = pick)", "required": false }
+        {
+          "name": "packages",
+          "type": "text",
+          "placeholder": "name (empty = pick)",
+          "required": false
+        }
       ]
     },
     {
@@ -76,8 +87,14 @@
       "required": false,
       "default": "tap",
       "data": [
-        { "title": "Whole Tap (brew trust user/repo)", "value": "tap" },
-        { "title": "Only the Package (brew trust --formula/--cask ...)", "value": "item" }
+        {
+          "title": "Whole Tap (brew trust user/repo)",
+          "value": "tap"
+        },
+        {
+          "title": "Only the Package (brew trust --formula/--cask ...)",
+          "value": "item"
+        }
       ]
     },
     {

@@ -5,10 +5,9 @@ import { InfoView } from "./info-view";
 import { InstalledPackage, kindArgs, loadInstalled } from "./packages";
 import { RunView } from "./run-view";
 
-export type ListMode = "uninstall" | "zap" | "upgrade";
+export type ListMode = "zap" | "upgrade";
 
 const TITLES: Record<ListMode, string> = {
-  uninstall: "Search installed packages to uninstall…",
   zap: "Search installed casks to zap…",
   upgrade: "Search outdated packages…",
 };
@@ -16,7 +15,7 @@ const TITLES: Record<ListMode, string> = {
 export function InstalledList(props: { mode: ListMode }) {
   const { mode } = props;
   const { push } = useNavigation();
-  const { data = [], isLoading, revalidate } = usePromise(loadInstalled, [mode === "upgrade" || mode === "uninstall"]);
+  const { data = [], isLoading, revalidate } = usePromise(loadInstalled, [mode === "upgrade"]);
 
   const visible = useMemo(() => {
     if (mode === "zap") return data.filter((p) => p.kind === "cask");
@@ -70,8 +69,7 @@ export function InstalledList(props: { mode: ListMode }) {
           onAction={() => uninstall(pkg, true)}
         />
       ) : null;
-    const ordered =
-      mode === "upgrade" ? [upgrade, remove, zap] : mode === "zap" ? [zap, remove, upgrade] : [remove, zap, upgrade];
+    const ordered = mode === "upgrade" ? [upgrade, remove, zap] : [zap, remove, upgrade];
     return (
       <ActionPanel>
         <ActionPanel.Section>{ordered}</ActionPanel.Section>
@@ -144,7 +142,7 @@ export function InstalledList(props: { mode: ListMode }) {
         </List.Section>
       )}
       {!isLoading && visible.length === 0 && mode !== "upgrade" && (
-        <List.EmptyView title={mode === "zap" ? "No casks installed" : "Nothing installed"} icon={Icon.Box} />
+        <List.EmptyView title="No casks installed" icon={Icon.Box} />
       )}
       <List.Section title="Formulae" subtitle={String(formulae.length)}>
         {formulae.map(item)}

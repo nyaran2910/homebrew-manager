@@ -1,13 +1,12 @@
 # Homebrew (Raycast Extension)
 
-Install, uninstall (including `--zap`), and upgrade Homebrew packages from Raycast — with automatic tap trust.
+Install, zap-uninstall (`brew uninstall --zap`), and upgrade Homebrew packages from Raycast — with automatic tap trust.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
 | **Brew Install** | Search formulae/casks and install. Pass an argument (e.g. `--cask foo`, `user/tap/name`) to run immediately. |
-| **Brew Uninstall** | Pick an installed formula/cask to uninstall, or pass names as an argument. |
 | **Brew Uninstall (Zap)** | Pick an installed cask and run `brew uninstall --zap`, or pass names as an argument. |
 | **Brew Upgrade** | List outdated packages; upgrade one or all. Pass names as an argument to upgrade directly. |
 | **Brew Trust Taps** | Show taps with their trust status and run `brew trust` / `brew untrust`. |
