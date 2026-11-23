@@ -34,10 +34,10 @@ Dependency errors (`… is required by …`) are **not** forced.
 
 ## Sandbox errors
 
-Homebrew 7 extracts downloads inside its own `sandbox-exec` sandbox. If that fails with
-`sandbox_apply: Operation not permitted`, the command is retried once automatically. If it still fails,
-use **Run in Terminal** (toast action or ⌘T in the output view) to run the same command in Terminal.app,
-outside Raycast.
+Each command starts brew exactly once per run: running the same install twice concurrently makes both
+processes stage the same download and fail with errors like `sandbox_apply: Operation not permitted` or
+`chmod: …/.caskroom/…: No such file or directory`. If `sandbox_apply` still fails, the command is retried once,
+and **Run in Terminal** (toast action or ⌘T in the output view) runs the same command in Terminal.app.
 
 ## Notes
 

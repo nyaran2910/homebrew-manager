@@ -25,9 +25,15 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
   const [lastArgs, setLastArgs] = useState<string[]>();
   const [runId, setRunId] = useState(0);
   const buffer = useRef("");
+  // React may run effects twice for the same mount (Strict Mode in development builds).
+  // Starting brew twice makes two processes stage the same download concurrently and
+  // delete each other's files, so start each run exactly once and never abort it from
+  // an effect cleanup (killing brew does not stop its worker processes anyway).
+  const startedRunId = useRef<number | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
+    if (startedRunId.current === runId) return;
+    startedRunId.current = runId;
     buffer.current = "";
     setOutput("");
     setStatus("running");
@@ -53,7 +59,6 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
           scheduleFlush();
         },
         {
-          signal: controller.signal,
           onTrust: (label) => {
             toast.title = `Trusting: ${label}`;
           },
@@ -62,7 +67,6 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
           },
         },
       );
-      if (controller.signal.aborted) return;
       if (flushTimer) clearTimeout(flushTimer);
       setOutput(buffer.current);
       setTrusted(result.trusted);
@@ -102,11 +106,6 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
       }
       onDone?.(result.ok);
     })();
-
-    return () => {
-      controller.abort();
-      if (flushTimer) clearTimeout(flushTimer);
-    };
   }, [runId]);
 
   const shown =
