@@ -32,6 +32,13 @@ If `brew uninstall` (including `--zap`) fails with an error that `--force` gets 
 by hand — the extension retries once with `--force`. Turn this off in preferences if you prefer.
 Dependency errors (`… is required by …`) are **not** forced.
 
+## Sandbox errors
+
+Homebrew 7 extracts downloads inside its own `sandbox-exec` sandbox. If that fails with
+`sandbox_apply: Operation not permitted`, the command is retried once automatically. If it still fails,
+use **Run in Terminal** (toast action or ⌘T in the output view) to run the same command in Terminal.app,
+outside Raycast.
+
 ## Notes
 
 - Output streams live into the command view; keep it open until the command finishes.

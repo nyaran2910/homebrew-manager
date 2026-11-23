@@ -4,9 +4,11 @@ import {
   extractErrorText,
   findTrustCommands,
   hasUntrustedSkip,
+  isSandboxFailure,
   needsForceRetry,
   parseSearchOutput,
   parseVersionsOutput,
+  shellQuote,
   splitArgs,
   withForce,
 } from "./parse.ts";
@@ -105,5 +107,19 @@ describe("force retry", () => {
       "foo",
     ]);
     assert.deepEqual(withForce(["uninstall", "--force", "foo"]), ["uninstall", "--force", "foo"]);
+  });
+});
+
+describe("sandbox failure", () => {
+  it("detects nested sandbox failures", () => {
+    assert.equal(isSandboxFailure("sandbox-exec: sandbox_apply: Operation not permitted\n"), true);
+    assert.equal(isSandboxFailure("Error: boom"), false);
+  });
+
+  it("quotes shell arguments", () => {
+    assert.equal(
+      shellQuote(["/opt/homebrew/bin/brew", "install", "--cask", "it's here"]),
+      "/opt/homebrew/bin/brew install --cask 'it'\\''s here'",
+    );
   });
 });

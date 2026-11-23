@@ -1,6 +1,14 @@
 import { Action, ActionPanel, Clipboard, Color, Detail, Icon, showToast, Toast } from "@raycast/api";
 import { useEffect, useRef, useState } from "react";
-import { errorClipboardText, formatCommand, getPrefs, runBrewWithAutoTrust, saveLastError, StoredError } from "./brew";
+import {
+  errorClipboardText,
+  formatCommand,
+  getPrefs,
+  runBrewWithAutoTrust,
+  runInTerminal,
+  saveLastError,
+  StoredError,
+} from "./brew";
 
 type Status = "running" | "success" | "failed";
 
@@ -14,6 +22,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
   const [error, setError] = useState<StoredError>();
   const [trusted, setTrusted] = useState<string[]>([]);
   const [forcedCommand, setForcedCommand] = useState<string>();
+  const [lastArgs, setLastArgs] = useState<string[]>();
   const [runId, setRunId] = useState(0);
   const buffer = useRef("");
 
@@ -57,6 +66,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
       if (flushTimer) clearTimeout(flushTimer);
       setOutput(buffer.current);
       setTrusted(result.trusted);
+      setLastArgs(result.args);
       if (result.forced) setForcedCommand(formatCommand(result.args));
 
       if (result.ok) {
@@ -84,6 +94,10 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
             await Clipboard.copy(errorClipboardText(entry));
             t.title = "Error copied";
           },
+        };
+        toast.secondaryAction = {
+          title: "Run in Terminal",
+          onAction: () => runInTerminal(result.args),
         };
       }
       onDone?.(result.ok);
@@ -123,6 +137,14 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
       actions={
         <ActionPanel>
           {error && <Action.CopyToClipboard title="Copy Error" content={errorClipboardText(error)} icon={Icon.Bug} />}
+          {status === "failed" && (
+            <Action
+              title="Run in Terminal"
+              icon={Icon.Terminal}
+              shortcut={{ modifiers: ["cmd"], key: "t" }}
+              onAction={() => runInTerminal(lastArgs ?? args)}
+            />
+          )}
           <Action.CopyToClipboard
             title="Copy Full Output"
             content={output}

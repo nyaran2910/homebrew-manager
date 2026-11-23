@@ -6,7 +6,9 @@ import {
   extractErrorText,
   findTrustCommands,
   hasUntrustedSkip,
+  isSandboxFailure,
   needsForceRetry,
+  shellQuote,
   stripAnsi,
   TrustScope,
   withForce,
@@ -139,6 +141,7 @@ export async function runBrewWithAutoTrust(
   const { autoTrust, trustScope, autoForceUninstall } = getPrefs();
   let current = args;
   let forced = false;
+  let sandboxRetried = false;
   const applied = new Set<string>();
   const trusted: string[] = [];
   let fullOutput = "";
@@ -166,6 +169,11 @@ export async function runBrewWithAutoTrust(
     if (!autoTrust || !needsTrust) {
       const canForce =
         autoForceUninstall && code !== 0 && current[0] === "uninstall" && !forced && needsForceRetry(attemptOutput);
+      if (code !== 0 && !sandboxRetried && isSandboxFailure(attemptOutput)) {
+        sandboxRetried = true;
+        emit("\n==> Homebrew's sandbox could not be applied; retrying once\n");
+        continue;
+      }
       if (canForce) {
         forced = true;
         current = withForce(current);
@@ -194,6 +202,18 @@ export async function runBrewWithAutoTrust(
   }
 
   return { ok: false, code: 1, output: fullOutput, trusted, args: current, forced };
+}
+
+/** Open Terminal.app and run the command there, outside Raycast's process tree. */
+export function runInTerminal(args: string[]): void {
+  const script = join(environment.supportPath, "run-in-terminal.command");
+  mkdirSync(dirname(script), { recursive: true });
+  writeFileSync(
+    script,
+    `#!/bin/zsh\nclear\necho ${shellQuote(["$", "brew", ...args])}\n${shellQuote([brewExecutable(), ...args])}\n`,
+  );
+  chmodSync(script, 0o755);
+  spawn("/usr/bin/open", ["-a", "Terminal", script], { detached: true, stdio: "ignore" }).unref();
 }
 
 // ---------- Last error storage ----------

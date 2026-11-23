@@ -129,3 +129,13 @@ export function withForce(args: string[]): string[] {
   if (args.includes("--force") || args.includes("-f")) return args;
   return [args[0], "--force", ...args.slice(1)];
 }
+
+/** Homebrew's own sandbox could not be applied (seen intermittently when launched from Raycast). */
+export function isSandboxFailure(output: string): boolean {
+  return /sandbox_apply: Operation not permitted/.test(stripAnsi(output));
+}
+
+/** Quote argv for a POSIX shell script. */
+export function shellQuote(args: string[]): string {
+  return args.map((arg) => (/^[\w@%+=:,./-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, `'\\''`)}'`)).join(" ");
+}
