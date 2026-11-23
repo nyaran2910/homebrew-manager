@@ -13,6 +13,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
   const [status, setStatus] = useState<Status>("running");
   const [error, setError] = useState<StoredError>();
   const [trusted, setTrusted] = useState<string[]>([]);
+  const [forcedCommand, setForcedCommand] = useState<string>();
   const [runId, setRunId] = useState(0);
   const buffer = useRef("");
 
@@ -23,6 +24,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
     setStatus("running");
     setError(undefined);
     setTrusted([]);
+    setForcedCommand(undefined);
 
     let flushTimer: NodeJS.Timeout | undefined;
     const scheduleFlush = () => {
@@ -46,21 +48,28 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
           onTrust: (label) => {
             toast.title = `Trusting: ${label}`;
           },
+          onForce: (label) => {
+            toast.title = `Retrying with --force: ${label}`;
+          },
         },
       );
       if (controller.signal.aborted) return;
       if (flushTimer) clearTimeout(flushTimer);
       setOutput(buffer.current);
       setTrusted(result.trusted);
+      if (result.forced) setForcedCommand(formatCommand(result.args));
 
       if (result.ok) {
         setStatus("success");
         toast.style = Toast.Style.Success;
         toast.title = `Done: ${command}`;
-        toast.message = result.trusted.length ? `Trusted ${result.trusted.join(", ")}` : undefined;
+        toast.message =
+          [result.forced ? "Used --force" : "", result.trusted.length ? `Trusted ${result.trusted.join(", ")}` : ""]
+            .filter(Boolean)
+            .join(" · ") || undefined;
       } else {
         setStatus("failed");
-        const entry = await saveLastError(args, result.output);
+        const entry = await saveLastError(result.args, result.output);
         setError(entry);
         toast.style = Toast.Style.Failure;
         toast.title = `Failed: ${command}`;
@@ -106,6 +115,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
           <Detail.Metadata.TagList title="Status">
             <Detail.Metadata.TagList.Item text={statusTag.text} color={statusTag.color} />
           </Detail.Metadata.TagList>
+          {forcedCommand && <Detail.Metadata.Label title="Retried With --force" text={forcedCommand} />}
           {trusted.length > 0 && <Detail.Metadata.Label title="Auto-Trusted" text={trusted.join(", ")} />}
           {error && <Detail.Metadata.Label title="Error" text={error.error.split("\n")[0]} />}
         </Detail.Metadata>

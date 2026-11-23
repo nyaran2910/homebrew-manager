@@ -98,6 +98,15 @@
       ]
     },
     {
+      "name": "autoForceUninstall",
+      "title": "Uninstall",
+      "label": "Retry with --force when uninstall fails",
+      "description": "When brew uninstall fails with an error --force can get past (e.g. the app was already deleted), retry automatically with --force.",
+      "type": "checkbox",
+      "required": false,
+      "default": true
+    },
+    {
       "name": "copyErrorOnFailure",
       "title": "Errors",
       "label": "Copy the error to the clipboard automatically on failure",

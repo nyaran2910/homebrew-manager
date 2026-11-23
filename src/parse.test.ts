@@ -4,9 +4,11 @@ import {
   extractErrorText,
   findTrustCommands,
   hasUntrustedSkip,
+  needsForceRetry,
   parseSearchOutput,
   parseVersionsOutput,
   splitArgs,
+  withForce,
 } from "./parse.ts";
 
 const refuse =
@@ -77,5 +79,31 @@ describe("parsers", () => {
       { name: "git", versions: ["2.47.0"] },
       { name: "openssl@3", versions: ["3.4.0", "3.4.1"] },
     ]);
+  });
+});
+
+describe("force retry", () => {
+  it("detects uninstall failures that --force fixes", () => {
+    assert.equal(needsForceRetry("Error: Cask 'foo' is not installed."), true);
+    assert.equal(needsForceRetry("Error: It seems the App source '/Applications/Foo.app' is not there."), true);
+    assert.equal(needsForceRetry("Error: uninstall script /tmp/x.sh does not exist."), true);
+  });
+
+  it("ignores unrelated errors", () => {
+    assert.equal(
+      needsForceRetry("Error: Refusing to uninstall /opt/homebrew/Cellar/a because it is required by b"),
+      false,
+    );
+  });
+
+  it("adds --force once, after the subcommand", () => {
+    assert.deepEqual(withForce(["uninstall", "--zap", "--cask", "foo"]), [
+      "uninstall",
+      "--force",
+      "--zap",
+      "--cask",
+      "foo",
+    ]);
+    assert.deepEqual(withForce(["uninstall", "--force", "foo"]), ["uninstall", "--force", "foo"]);
   });
 });

@@ -25,6 +25,13 @@ When this (or a "Skipping … because it is not trusted" warning) appears, the e
 `brew trust` command and retries automatically. Choose in preferences whether to trust the whole tap or only
 the specific package, or turn auto-trust off.
 
+## Auto `--force` on uninstall
+
+If `brew uninstall` (including `--zap`) fails with an error that `--force` gets past — for example
+`Cask 'foo' is not installed.` or `It seems the App source '…' is not there.` after the app was deleted
+by hand — the extension retries once with `--force`. Turn this off in preferences if you prefer.
+Dependency errors (`… is required by …`) are **not** forced.
+
 ## Notes
 
 - Output streams live into the command view; keep it open until the command finishes.

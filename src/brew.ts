@@ -2,12 +2,21 @@ import { environment, getPreferenceValues, LocalStorage } from "@raycast/api";
 import { execFile, spawn } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { extractErrorText, findTrustCommands, hasUntrustedSkip, stripAnsi, TrustScope } from "./parse";
+import {
+  extractErrorText,
+  findTrustCommands,
+  hasUntrustedSkip,
+  needsForceRetry,
+  stripAnsi,
+  TrustScope,
+  withForce,
+} from "./parse";
 
 interface Preferences {
   autoTrust?: boolean;
   trustScope?: TrustScope;
   copyErrorOnFailure?: boolean;
+  autoForceUninstall?: boolean;
   brewPath?: string;
 }
 
@@ -17,6 +26,7 @@ export function getPrefs() {
     autoTrust: prefs.autoTrust ?? true,
     trustScope: prefs.trustScope ?? "tap",
     copyErrorOnFailure: prefs.copyErrorOnFailure ?? false,
+    autoForceUninstall: prefs.autoForceUninstall ?? true,
     brewPath: prefs.brewPath?.trim() || undefined,
   };
 }
@@ -106,18 +116,29 @@ export interface RunResult {
   code: number;
   output: string;
   trusted: string[];
+  /** The final argv that was run (may include an added --force). */
+  args: string[];
+  forced: boolean;
 }
 
 /**
  * Run a brew command. If Homebrew says a tap/package must be trusted, run the
  * suggested `brew trust` command(s) and retry (when auto-trust is enabled).
+ * If `brew uninstall` fails with an error that `--force` gets past, retry with
+ * `--force` (when auto-force is enabled).
  */
 export async function runBrewWithAutoTrust(
   args: string[],
   onOutput: (chunk: string) => void,
-  options: { signal?: AbortSignal; onTrust?: (command: string) => void } = {},
+  options: {
+    signal?: AbortSignal;
+    onTrust?: (command: string) => void;
+    onForce?: (command: string) => void;
+  } = {},
 ): Promise<RunResult> {
-  const { autoTrust, trustScope } = getPrefs();
+  const { autoTrust, trustScope, autoForceUninstall } = getPrefs();
+  let current = args;
+  let forced = false;
   const applied = new Set<string>();
   const trusted: string[] = [];
   let fullOutput = "";
@@ -128,22 +149,32 @@ export async function runBrewWithAutoTrust(
 
   for (let attempt = 0; attempt < 6; attempt++) {
     let attemptOutput = "";
-    emit(`$ ${formatCommand(args)}\n`);
+    emit(`$ ${formatCommand(current)}\n`);
     const code = await spawnBrew(
-      args,
+      current,
       (chunk) => {
         attemptOutput += chunk;
         emit(chunk);
       },
       options.signal,
     );
-    if (options.signal?.aborted) return { ok: false, code, output: fullOutput, trusted };
+    if (options.signal?.aborted) return { ok: false, code, output: fullOutput, trusted, args: current, forced };
 
     const pending = findTrustCommands(attemptOutput, trustScope).filter((cmd) => !applied.has(cmd.join(" ")));
     const needsTrust = pending.length > 0 && (code !== 0 || hasUntrustedSkip(attemptOutput));
 
     if (!autoTrust || !needsTrust) {
-      return { ok: code === 0, code, output: fullOutput, trusted };
+      const canForce =
+        autoForceUninstall && code !== 0 && current[0] === "uninstall" && !forced && needsForceRetry(attemptOutput);
+      if (canForce) {
+        forced = true;
+        current = withForce(current);
+        const label = formatCommand(current);
+        options.onForce?.(label);
+        emit(`\n==> Uninstall failed with an error --force can fix; retrying: ${label}\n`);
+        continue;
+      }
+      return { ok: code === 0, code, output: fullOutput, trusted, args: current, forced };
     }
 
     let trustFailed = false;
@@ -157,12 +188,12 @@ export async function runBrewWithAutoTrust(
       else trusted.push(trustArgs[trustArgs.length - 1]);
     }
     if (trustFailed) {
-      return { ok: false, code: code || 1, output: fullOutput, trusted };
+      return { ok: false, code: code || 1, output: fullOutput, trusted, args: current, forced };
     }
     emit(`\n==> Retrying after trusting ${pending.length} target(s)\n`);
   }
 
-  return { ok: false, code: 1, output: fullOutput, trusted };
+  return { ok: false, code: 1, output: fullOutput, trusted, args: current, forced };
 }
 
 // ---------- Last error storage ----------

@@ -105,3 +105,27 @@ export function parseVersionsOutput(output: string): VersionEntry[] {
       return { name, versions };
     });
 }
+
+/**
+ * Failures of `brew uninstall` that `--force` gets past, e.g.
+ *   Error: Cask 'foo' is not installed.                       (app already deleted by hand)
+ *   Error: It seems the App source '/Applications/Foo.app' is not there.
+ *   Error: uninstall script /path/uninstall.sh does not exist.
+ */
+const FORCE_FIXABLE_PATTERNS = [
+  /Cask '[^']+' is not installed/,
+  /It seems the .+ source '.+' is not there/,
+  /uninstall script .+ does not exist/,
+  /brew uninstall --force/,
+];
+
+export function needsForceRetry(output: string): boolean {
+  const text = stripAnsi(output);
+  return FORCE_FIXABLE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+/** Insert `--force` right after the subcommand unless it is already present. */
+export function withForce(args: string[]): string[] {
+  if (args.includes("--force") || args.includes("-f")) return args;
+  return [args[0], "--force", ...args.slice(1)];
+}
