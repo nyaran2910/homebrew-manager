@@ -1,4 +1,5 @@
-import { Action, ActionPanel, Clipboard, Color, Detail, Icon, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Clipboard, Color, Detail, Icon, open, showToast, Toast } from "@raycast/api";
+import { needsFullDiskAccess } from "./parse";
 import { useEffect, useRef, useState } from "react";
 import {
   errorClipboardText,
@@ -12,6 +13,9 @@ import {
 
 type Status = "running" | "success" | "failed";
 
+const FULL_DISK_ACCESS_SETTINGS = "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles";
+const openFullDiskAccess = () => open(FULL_DISK_ACCESS_SETTINGS);
+
 const MAX_RENDERED_CHARS = 60_000;
 
 export function RunView(props: { args: string[]; title?: string; onDone?: (ok: boolean) => void }) {
@@ -23,6 +27,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
   const [trusted, setTrusted] = useState<string[]>([]);
   const [forcedCommand, setForcedCommand] = useState<string>();
   const [lastArgs, setLastArgs] = useState<string[]>();
+  const [needsFda, setNeedsFda] = useState(false);
   const [runId, setRunId] = useState(0);
   const buffer = useRef("");
   // React may run effects twice for the same mount (Strict Mode in development builds).
@@ -40,6 +45,7 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
     setError(undefined);
     setTrusted([]);
     setForcedCommand(undefined);
+    setNeedsFda(false);
 
     let flushTimer: NodeJS.Timeout | undefined;
     const scheduleFlush = () => {
@@ -92,6 +98,21 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
           await Clipboard.copy(errorClipboardText(entry));
           toast.message = `Error copied · ${toast.message}`;
         }
+        if (needsFullDiskAccess(result.output)) {
+          setNeedsFda(true);
+          toast.title = "Raycast needs Full Disk Access";
+          toast.message = "Allow it in System Settings, restart Raycast, then run again.";
+          toast.primaryAction = { title: "Open Full Disk Access Settings", onAction: openFullDiskAccess };
+          toast.secondaryAction = {
+            title: "Copy Error",
+            onAction: async (t) => {
+              await Clipboard.copy(errorClipboardText(entry));
+              t.title = "Error copied";
+            },
+          };
+          onDone?.(result.ok);
+          return;
+        }
         toast.primaryAction = {
           title: "Copy Error",
           onAction: async (t) => {
@@ -131,10 +152,17 @@ export function RunView(props: { args: string[]; title?: string; onDone?: (ok: b
           {forcedCommand && <Detail.Metadata.Label title="Retried With --force" text={forcedCommand} />}
           {trusted.length > 0 && <Detail.Metadata.Label title="Auto-Trusted" text={trusted.join(", ")} />}
           {error && <Detail.Metadata.Label title="Error" text={error.error.split("\n")[0]} />}
+          {needsFda && (
+            <Detail.Metadata.Label
+              title="Fix"
+              text="Allow Raycast in Full Disk Access, restart Raycast, then run again"
+            />
+          )}
         </Detail.Metadata>
       }
       actions={
         <ActionPanel>
+          {needsFda && <Action title="Open Full Disk Access Settings" icon={Icon.Lock} onAction={openFullDiskAccess} />}
           {error && <Action.CopyToClipboard title="Copy Error" content={errorClipboardText(error)} icon={Icon.Bug} />}
           {status === "failed" && (
             <Action

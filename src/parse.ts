@@ -139,3 +139,8 @@ export function isSandboxFailure(output: string): boolean {
 export function shellQuote(args: string[]): string {
   return args.map((arg) => (/^[\w@%+=:,./-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, `'\\''`)}'`)).join(" ");
 }
+
+/** Homebrew could not touch files under ~/Library because the launching app lacks Full Disk Access. */
+export function needsFullDiskAccess(output: string): boolean {
+  return /enable Full Disk Access/i.test(stripAnsi(output));
+}

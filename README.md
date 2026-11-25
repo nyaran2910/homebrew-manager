@@ -42,6 +42,8 @@ and **Run in Terminal** (toast action or ⌘T in the output view) runs the same 
 ## Notes
 
 - Output streams live into the command view; keep it open until the command finishes.
+- Zapping some apps needs **Full Disk Access** for Raycast. When that's missing, the error offers
+  **Open Full Disk Access Settings**; allow Raycast, restart it, then run the command again.
 - Commands needing `sudo` (some casks) show a macOS password dialog via `SUDO_ASKPASS`.
 - On failure, the toast offers **Copy Error**; the error is also saved for **Copy Last Brew Error**.
   Enable *Copy the error to the clipboard automatically on failure* to skip that step.

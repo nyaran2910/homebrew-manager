@@ -5,6 +5,7 @@ import {
   findTrustCommands,
   hasUntrustedSkip,
   isSandboxFailure,
+  needsFullDiskAccess,
   needsForceRetry,
   parseSearchOutput,
   parseVersionsOutput,
@@ -121,5 +122,17 @@ describe("sandbox failure", () => {
       shellQuote(["/opt/homebrew/bin/brew", "install", "--cask", "it's here"]),
       "/opt/homebrew/bin/brew install --cask 'it'\\''s here'",
     );
+  });
+});
+
+describe("full disk access", () => {
+  it("detects the Full Disk Access error", () => {
+    assert.equal(
+      needsFullDiskAccess(
+        "Error: Unable to remove some files. Please enable Full Disk Access for your terminal under System Settings → Privacy & Security → Full Disk Access.",
+      ),
+      true,
+    );
+    assert.equal(needsFullDiskAccess("Error: boom"), false);
   });
 });
