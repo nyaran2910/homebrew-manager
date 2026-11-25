@@ -115,6 +115,8 @@ export function parseVersionsOutput(output: string): VersionEntry[] {
 const FORCE_FIXABLE_PATTERNS = [
   /Cask '[^']+' is not installed/,
   /It seems the .+ source '.+' is not there/,
+  // A leftover backup from an earlier interrupted uninstall blocks moving the app back.
+  /It seems there is already an? .+ at '.+'/,
   /uninstall script .+ does not exist/,
   /brew uninstall --force/,
 ];

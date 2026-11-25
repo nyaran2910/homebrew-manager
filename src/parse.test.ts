@@ -90,6 +90,10 @@ describe("force retry", () => {
     assert.equal(needsForceRetry("Error: Cask 'foo' is not installed."), true);
     assert.equal(needsForceRetry("Error: It seems the App source '/Applications/Foo.app' is not there."), true);
     assert.equal(needsForceRetry("Error: uninstall script /tmp/x.sh does not exist."), true);
+    assert.equal(
+      needsForceRetry("Error: It seems there is already an App at '/opt/homebrew/Caskroom/a/1.0/A.app'."),
+      true,
+    );
   });
 
   it("ignores unrelated errors", () => {
